@@ -7,7 +7,8 @@ export type SessionAccount = {
   id: string;
   email: string;
   name: string;
-  role: "learner" | "admin";
+  role: "learner" | "admin" | "superadmin";
+  username: string | null;
 };
 
 const SessionContext = createContext<SessionAccount | null>(null);

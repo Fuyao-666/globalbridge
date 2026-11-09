@@ -77,6 +77,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const ready = useHydrated();
   const pathname = usePathname();
   const locale = useStore((state) => state.locale);
+  const session = useSession();
+  const staff = session.role !== "learner";
   const [open, setOpen] = useState(false);
   if (!ready) {
     return (
@@ -86,12 +88,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-sidebar-border bg-sidebar md:flex">
+    <div className={cn("min-h-screen text-foreground", staff ? "bg-[#f4efe6]" : "bg-background")}>
+      <aside className={cn("fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r md:flex", staff ? "border-slate-800 bg-[#101828] text-slate-100" : "border-sidebar-border bg-sidebar")}>
         <Sidebar pathname={pathname} onNavigate={() => undefined} />
       </aside>
       <div className="md:pl-60">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background/90 px-3 backdrop-blur md:px-6">
+        <header className={cn("sticky top-0 z-20 flex h-14 items-center gap-2 border-b px-3 backdrop-blur md:px-6", staff ? "border-amber-900/40 bg-[#101828]/95" : "bg-background/90")}>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
@@ -102,6 +104,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <Sidebar pathname={pathname} onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
+          {staff && <span className="hidden rounded-full bg-amber-400/15 px-2 py-1 text-xs font-medium text-amber-200 md:inline">{session.role === "superadmin" ? (locale === "zh" ? "超管控制台" : "Superadmin") : (locale === "zh" ? "管理端" : "Admin")}</span>}
           <GlobalSearch />
           <div className="ml-auto flex items-center gap-1">
             <LanguageSwitch />
@@ -128,6 +131,7 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
   const session = useSession();
   const profile = useStore((state) => state.profile);
   const role = session.role;
+  const staff = role !== "learner";
   const completed = useStore((state) => state.completedLessons);
   const purchases = useStore((state) => state.sim.purchases.length);
   const liveExtra = useStore((state) => state.sim.listings.filter((listing) => !listing.seed && listing.status === "live").length);
@@ -137,7 +141,7 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
   const xp = 650 + completed.length * 10 + purchases * 20 + liveExtra * 15 + extraCampaigns * 10;
   const level = levelFrom(xp);
   return (
-    <div className="flex h-full flex-col">
+    <div className={cn("flex h-full flex-col", staff && "bg-[#101828] text-slate-100")}>
       <Link href="/learn" onClick={onNavigate} className="flex items-center gap-2 px-4 py-4">
         <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
           <GraduationCap className="size-5" />
@@ -160,8 +164,9 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
                 href={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent",
-                  (active || simActive) && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent",
+                  staff ? "text-slate-200 hover:bg-white/10" : "text-sidebar-foreground",
+                  (active || simActive) && (staff ? "bg-amber-400/15 font-medium text-amber-100" : "bg-sidebar-accent font-medium text-sidebar-accent-foreground"),
                 )}
               >
                 <Icon className="size-4" />
@@ -175,8 +180,9 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
                       href={sub.href}
                       onClick={onNavigate}
                       className={cn(
-                        "block rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-                        pathname === sub.href && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                        "block rounded-md px-2 py-1.5 text-xs hover:bg-sidebar-accent hover:text-foreground",
+                        staff ? "text-slate-400 hover:bg-white/10 hover:text-slate-100" : "text-muted-foreground",
+                        pathname === sub.href && (staff ? "bg-amber-400/15 font-medium text-amber-100" : "bg-sidebar-accent font-medium text-sidebar-accent-foreground"),
                       )}
                     >
                       {label(sub, locale)}
@@ -204,24 +210,24 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
             {locale === "zh" ? "帮助中心" : "Help"}
           </Link>
         </div>
-        {role === "admin" && (
+        {staff && (
           <Link
             href="/admin"
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent",
-              pathname === "/admin" && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-amber-100 hover:bg-white/10",
+              pathname === "/admin" && "bg-amber-400/20 font-medium",
             )}
           >
             <Shield className="size-4" />
-            {locale === "zh" ? "管理后台" : "Admin"}
+            {locale === "zh" ? "管理控制台" : "Admin console"}
           </Link>
         )}
       </nav>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="m-2 flex items-center gap-2 rounded-xl border px-2 py-2 text-left hover:bg-muted">
-            <span className="grid size-8 place-items-center rounded-full bg-primary/10 text-primary">
+          <button className={cn("m-2 flex items-center gap-2 rounded-xl border px-2 py-2 text-left", staff ? "border-slate-700 hover:bg-white/10" : "hover:bg-muted")}>
+            <span className={cn("grid size-8 place-items-center rounded-full", staff ? "bg-amber-400/20 text-amber-200" : "bg-primary/10 text-primary")}>
               <UserRound className="size-4" />
             </span>
             <span className="min-w-0 flex-1">
@@ -233,8 +239,8 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
           <DropdownMenuLabel>
-            <span className="block">{role === "admin" ? (locale === "zh" ? "管理员" : "Admin") : (locale === "zh" ? "学员" : "Learner")}</span>
-            <span className="block truncate text-xs font-normal text-muted-foreground">{session.email}</span>
+            <span className="block">{role === "superadmin" ? (locale === "zh" ? "超级管理员" : "Superadmin") : role === "admin" ? (locale === "zh" ? "管理员" : "Admin") : (locale === "zh" ? "学员" : "Learner")}</span>
+            <span className="block truncate text-xs font-normal text-muted-foreground">{session.username || session.email}</span>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>

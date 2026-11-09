@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { COURSES, courseLessons } from "@/lib/data/courses";
 import { CLASSMATES } from "@/lib/data/content";
@@ -14,23 +14,111 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { PageIntro } from "@/components/widgets";
 
-export function AdminScreen() {
+export function AdminScreen({ superadmin }: { superadmin: boolean }) {
   const locale = useStore((state) => state.locale);
-  const [tab, setTab] = useState<"overview" | "courses" | "terms" | "params">("overview");
+  const [tab, setTab] = useState<"accounts" | "overview" | "courses" | "terms" | "params">(superadmin ? "accounts" : "overview");
+  const tabs = [
+    ...(superadmin ? (["accounts"] as const) : []),
+    "overview",
+    "courses",
+    "terms",
+    "params",
+  ] as const;
   return (
     <div>
-      <PageIntro title={locale === "zh" ? "管理后台" : "Admin"} body={locale === "zh" ? "这些参数只属于当前管理员账号，会立刻改变这台浏览器里的毛利和真实利润。" : "These parameters belong to this admin account and immediately change gross margin and true profit in this browser."} />
+      <PageIntro
+        kicker={superadmin ? (locale === "zh" ? "超级管理员" : "Superadmin") : (locale === "zh" ? "管理员" : "Admin")}
+        title={locale === "zh" ? "管理控制台" : "Admin console"}
+        body={locale === "zh" ? "这里和学员的学习界面分开。参数只影响当前这个管理员账号里的模拟。管理员账号只能由超级管理员添加。" : "This console is separate from the learner view. Parameters affect this admin account's simulator. Only a superadmin can add admin accounts."}
+      />
       <div className="mb-4 flex flex-wrap gap-2">
-        {(["overview", "courses", "terms", "params"] as const).map((item) => (
+        {tabs.map((item) => (
           <Button key={item} variant={tab === item ? "default" : "outline"} className="h-8" onClick={() => setTab(item)}>
-            {item === "overview" ? (locale === "zh" ? "概览" : "Overview") : item === "courses" ? (locale === "zh" ? "课程" : "Courses") : item === "terms" ? (locale === "zh" ? "术语" : "Glossary") : (locale === "zh" ? "模拟参数" : "Parameters")}
+            {item === "accounts" ? (locale === "zh" ? "管理员账号" : "Admin accounts") : item === "overview" ? (locale === "zh" ? "概览" : "Overview") : item === "courses" ? (locale === "zh" ? "课程" : "Courses") : item === "terms" ? (locale === "zh" ? "术语" : "Glossary") : (locale === "zh" ? "模拟参数" : "Parameters")}
           </Button>
         ))}
       </div>
+      {tab === "accounts" && superadmin && <Accounts />}
       {tab === "overview" && <Overview />}
       {tab === "courses" && <Courses />}
       {tab === "terms" && <Terms />}
       {tab === "params" && <Params />}
+    </div>
+  );
+}
+
+type ListedAccount = { id: string; email: string; username: string | null; name: string; role: string };
+
+function Accounts() {
+  const locale = useStore((state) => state.locale);
+  const [rows, setRows] = useState<ListedAccount[]>([]);
+  const [form, setForm] = useState({ name: "", username: "", email: "", password: "" });
+  const [error, setError] = useState("");
+  const zh = locale === "zh";
+
+  async function load() {
+    const response = await fetch("/api/admin/accounts");
+    if (response.ok) setRows(await response.json());
+  }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      void load();
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+    const response = await fetch("/api/admin/accounts", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(form),
+    });
+    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) {
+      setError(payload.error === "taken" ? (zh ? "邮箱或用户名已被使用。" : "That email or username is taken.") : payload.error === "username" ? (zh ? "用户名用 3 到 24 位小写字母、数字或下划线。" : "Username must be 3–24 letters, numbers, or underscores.") : (zh ? "没有添加成功。" : "Could not add the account."));
+      return;
+    }
+    setForm({ name: "", username: "", email: "", password: "" });
+    toast.success(zh ? "已添加管理员" : "Admin added");
+    await load();
+  }
+
+  return (
+    <div className="space-y-4">
+      <form className="grid gap-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 md:grid-cols-2" onSubmit={submit}>
+        <p className="text-sm text-muted-foreground md:col-span-2">{zh ? "新账号的角色固定为管理员，不能再创建一个超级管理员。" : "New accounts are admins. This form cannot create another superadmin."}</p>
+        <Input placeholder={zh ? "称呼" : "Name"} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
+        <Input placeholder={zh ? "用户名" : "Username"} value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} required />
+        <Input type="email" placeholder={zh ? "邮箱" : "Email"} value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} required />
+        <Input type="password" placeholder={zh ? "初始密码" : "Initial password"} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} required />
+        {error && <p className="text-sm text-destructive md:col-span-2">{error}</p>}
+        <Button type="submit" className="h-9 md:col-span-2">{zh ? "添加管理员" : "Add admin"}</Button>
+      </form>
+      <div className="overflow-auto rounded-2xl border">
+        <table className="w-full min-w-[640px] text-sm">
+          <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <tr>
+              <th className="px-3 py-2">{zh ? "称呼" : "Name"}</th>
+              <th className="px-3 py-2">{zh ? "用户名" : "Username"}</th>
+              <th className="px-3 py-2">{zh ? "邮箱" : "Email"}</th>
+              <th className="px-3 py-2">{zh ? "角色" : "Role"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id} className="border-t">
+                <td className="px-3 py-2">{row.name}</td>
+                <td className="px-3 py-2">{row.username || "—"}</td>
+                <td className="px-3 py-2">{row.email}</td>
+                <td className="px-3 py-2">{row.role === "superadmin" ? (zh ? "超级管理员" : "Superadmin") : row.role === "admin" ? (zh ? "管理员" : "Admin") : (zh ? "学员" : "Learner")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -7,11 +7,12 @@ const scrypt = promisify(scryptCallback);
 const COOKIE = "gb_session";
 const SESSION_MS = 14 * 24 * 60 * 60 * 1000;
 
-export type AccountRole = "learner" | "admin";
+export type AccountRole = "learner" | "admin" | "superadmin";
 
 export type Account = {
   id: string;
   email: string;
+  username: string | null;
   name: string;
   role: AccountRole;
 };
@@ -73,15 +74,19 @@ export async function currentAccount(): Promise<Account | null> {
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
   const rows = await sql<Account>(
-    `select a.id, a.email, a.name, a.role
+    `select a.id, a.email, a.username, a.name, a.role
      from sessions s
      join accounts a on a.id = s.account_id
      where s.token_hash = $1 and s.expires_at > now()`,
     [hashToken(token)],
   );
   const account = rows[0];
-  if (!account || (account.role !== "learner" && account.role !== "admin")) return null;
+  if (!account || (account.role !== "learner" && account.role !== "admin" && account.role !== "superadmin")) return null;
   return account;
+}
+
+export function isStaff(role: AccountRole) {
+  return role === "admin" || role === "superadmin";
 }
 
 export function newAccountId() {

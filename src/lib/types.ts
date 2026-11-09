@@ -1,5 +1,5 @@
 export type Locale = "zh" | "en";
-export type Role = "learner" | "admin";
+export type Role = "learner" | "admin" | "superadmin";
 export type Marketplace = "US" | "UK" | "DE" | "JP";
 
 export type Bi = { zh: string; en: string };
