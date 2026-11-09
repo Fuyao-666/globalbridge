@@ -9,12 +9,13 @@ function lesson(
   points: [Bi, Bi, Bi],
   sim: string,
   label?: Bi,
+  summary?: Bi,
 ): Lesson {
   return {
     id,
     title: bi(zh, en),
     minutes: 6 + (id.charCodeAt(id.length - 1) % 6),
-    summary: bi(
+    summary: summary ?? bi(
       `${points[0].zh} 本节留下可以带回模拟器的检查项。`,
       `${points[0].en} This lesson leaves checks you can take back to the simulator.`,
     ),
@@ -79,10 +80,22 @@ export const COURSES: Course[] = [
         title: bi("看懂一个站点", "Read a marketplace"),
         lessons: [
           lesson("mkt-01", "先选站点，再选商品", "Pick the marketplace before the product", [
-            P("同一个商品在美国、德国、日本的搜索意图可以完全不同。", "The same item can have different search intent in the US, Germany, and Japan."),
-            P("汇率、税率和履约时效会改写利润，翻译不能代替这个判断。", "Currency, tax, and delivery speed rewrite profit. Translation does not."),
-            P("在选品页切换站点，只观察需求分和月利润，先别改筛选。", "Switch marketplace on the selection page and watch demand and monthly profit before you touch filters."),
-          ], "/sim/selection"),
+            P(
+              "可折叠硅胶沥水篮在美国站常被搜成 collapsible colander，买家要的是煮意面、少占台面。德国站更常出现 Nudelsieb 和 spülmaschinenfest，先问能不能进洗碗机。日本站搜 折りたたみ 水切り，小厨房在意的是水槽边能不能立住。三个词对上的竞品和主图不是同一场比赛。",
+              "The collapsible silicone colander is usually searched as “collapsible colander” on Amazon US: pasta and a small footprint. On Amazon DE the queries are Nudelsieb and spülmaschinenfest: will it go in the dishwasher? On Amazon JP it is 折りたたみ 水切り: will it stand at the edge of a small sink? Those three queries face different competitors and different main images.",
+            ),
+            P(
+              "这只篮子美国标价 US$18.99。只按模拟汇率 0.92 换成 €17.47 贴到德国站，税还没算：德国标价通常含 19% 增值税，选品卡片只做汇率换算，不会自动扣税。€17.47 若是含税价，去掉 19% 后约 €14.68，换回美元约 US$15.96，单件比美国站少约 US$3.03。卡片上的月毛利也会被汇率放大：日本站显示 JP¥165,212，按 151 换回美元大约只有 US$1,094，并不高于美国站的 US$1,243.32。",
+              "The same basket lists at US$18.99. Converting it at the simulator rate of 0.92 gives €17.47, and that still ignores tax. German prices usually include 19% VAT; the selection card converts currency and does not remove the tax. If €17.47 is tax-inclusive, the net is about €14.68, or about US$15.96, roughly US$3.03 less per unit than the US price. Currency also inflates the monthly figure: Japan shows JP¥165,212, which is only about US$1,094 at 151, below the US card’s US$1,243.32.",
+            ),
+            P(
+              "选品页右上角把站点从「亚马逊美国」切走，筛选用旁边的重置放回默认（家居与厨房、价格 US$10–80），先别改别的。这只沥水篮排在第一张卡片：美国站需求分 88、月毛利 US$1,243.32；切到德国站后需求分 74、月毛利 €960.84；再切日本站，需求分 77、月毛利 JP¥165,212。先记下这三组，再动价格带或类目。",
+              "On the selection page, use the marketplace menu at the top right, and use Reset next to it so the filters are Home & Kitchen and US$10–80. Change nothing else yet. This colander is the first card: demand 88 and US$1,243.32 monthly gross on Amazon US. After switching to Amazon DE, demand is 74 and monthly gross is €960.84. On Amazon JP, demand is 77 and monthly gross is JP¥165,212. Write those three down before you move the price band or the category.",
+            ),
+          ], "/sim/selection", undefined, P(
+            "同一件商品换站点之后，搜索词、含税到手价和卡片上的货币都会变。下面三组例子可以直接回选品页核对。",
+            "The same product changes search terms, tax-inclusive cash, and the currency on the card when the marketplace changes. The three examples below can be checked on the selection page.",
+          )),
           lesson("mkt-02", "搜索量要看趋势", "Read search trend, not a single number", [
             P("一周的搜索飙升可能只是节日或达人视频。", "A one-week spike may be a holiday or a creator video."),
             P("用近 90 天的方向判断要不要备两个月库存。", "Use 90 days of direction before you buy two months of stock."),

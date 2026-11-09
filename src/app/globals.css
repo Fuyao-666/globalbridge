@@ -117,6 +117,30 @@
   --sidebar-ring: #3b82f6;
 }
 
+.staff-main {
+  color-scheme: light;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #1d4ed8;
+  --primary-foreground: #ffffff;
+  --secondary: #e2e8f0;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --accent: #e0e7ff;
+  --accent-foreground: #1e3a8a;
+  --destructive: #dc2626;
+  --border: #e2e8f0;
+  --input: #cbd5e1;
+  --ring: #1d4ed8;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

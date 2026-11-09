@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { postPnl, spendCredit, useCredit } from "@/components/credit-dock";
+import { useSession } from "@/components/session-bridge";
 import { ChainBar, EmptyState, ExactMoney, PageIntro, ProductArt } from "@/components/widgets";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,7 @@ export default function ProcurementPage() {
   const inventory = useStore((state) => state.sim.inventory);
   const simDay = useStore((state) => state.sim.simDay);
   const placeOrder = useStore((state) => state.placeOrder);
+  const session = useSession();
   const [target, setTarget] = useState<{ productId: string; supplier: Supplier } | null>(null);
   const [qty, setQty] = useState(100);
   const [ack, setAck] = useState(false);
@@ -143,18 +146,33 @@ export default function ProcurementPage() {
               supplier={target.supplier}
               onCancel={() => setTarget(null)}
               onSubmit={() => {
-                const result = placeOrder({ productId: target.productId, supplierId: target.supplier.id, qty, acknowledge: ack });
-                if (!result.ok) {
-                  const message = result.error === "moq"
-                    ? (locale === "zh" ? `数量不能低于 MOQ ${target.supplier.moq}` : `Quantity is below MOQ ${target.supplier.moq}`)
-                    : result.error === "risk"
-                      ? (locale === "zh" ? "高风险订单需要勾选确认" : "High-risk orders need the confirmation")
-                      : (locale === "zh" ? "无法创建订单" : "Could not create the order");
-                  toast.error(message);
-                  return;
-                }
-                toast.success(locale === "zh" ? "采购单已创建，推进模拟日直到入库" : "Purchase created. Advance days until it is received.");
-                setTarget(null);
+                void (async () => {
+                  const cost = Math.round(target.supplier.unitCost * qty * 100) / 100;
+                  const learner = session.role === "learner";
+                  if (learner) {
+                    const spent = await spendCredit(cost);
+                    if (!spent.ok) {
+                      toast.error(locale === "zh" ? "实训额度不够支付这笔货款，请先申请充值。" : "Training credit cannot cover this purchase. Request a top-up first.");
+                      useCredit.getState().setOpenApply(true);
+                      return;
+                    }
+                  }
+                  const result = placeOrder({ productId: target.productId, supplierId: target.supplier.id, qty, acknowledge: ack });
+                  if (!result.ok) {
+                    if (learner) await postPnl(cost);
+                    const message = result.error === "moq"
+                      ? (locale === "zh" ? `数量不能低于 MOQ ${target.supplier.moq}` : `Quantity is below MOQ ${target.supplier.moq}`)
+                      : result.error === "risk"
+                        ? (locale === "zh" ? "高风险订单需要勾选确认" : "High-risk orders need the confirmation")
+                        : (locale === "zh" ? "无法创建订单" : "Could not create the order");
+                    toast.error(message);
+                    return;
+                  }
+                  toast.success(learner
+                    ? (locale === "zh" ? "采购单已创建，货款已从实训额度扣减。推进模拟日直到入库。" : "Purchase created. The goods value was deducted from training credit. Advance days until it is received.")
+                    : (locale === "zh" ? "采购单已创建，推进模拟日直到入库" : "Purchase created. Advance days until it is received."));
+                  setTarget(null);
+                })();
               }}
             />
           )}
@@ -175,7 +193,7 @@ function OrderForm({ qty, setQty, ack, setAck, supplier, onSubmit, onCancel }: {
         {locale === "zh" ? "数量" : "Quantity"}
         <Input className="mt-1" type="number" min={supplier.moq} value={qty} onChange={(event) => setQty(Number(event.target.value))} />
       </label>
-      <p className="mt-2 text-sm">{locale === "zh" ? "货款约" : "Goods value"} <ExactMoney usd={supplier.unitCost * (Number.isFinite(qty) ? qty : 0)} /></p>
+      <p className="mt-2 text-sm">{locale === "zh" ? "货款约" : "Goods value"} <ExactMoney usd={supplier.unitCost * (Number.isFinite(qty) ? qty : 0)} />{locale === "zh" ? "。学员下单会从实训额度里扣掉这笔货款。" : ". Learners pay this from training credit."}</p>
       {risk >= 60 && (
         <label className="mt-3 flex items-start gap-2 text-sm">
           <Checkbox checked={ack} onCheckedChange={(value) => setAck(value === true)} />

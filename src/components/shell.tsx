@@ -29,7 +29,10 @@ import {
   Package,
   ShoppingCart,
   Tags,
+  Users,
+  Wallet,
 } from "lucide-react";
+import { CreditBanner, CreditPill, CreditSync } from "@/components/credit-dock";
 import { PRODUCTS } from "@/lib/catalog";
 import { COURSES, courseLessons } from "@/lib/data/courses";
 import { GLOSSARY } from "@/lib/data/glossary";
@@ -61,6 +64,15 @@ const LINKS = [
   { href: "/me", icon: BookOpen, zh: "我的学习", en: "My learning" },
 ];
 
+const STAFF_LINKS = [
+  { href: "/admin", icon: Shield, zh: "管理控制台", en: "Console", exact: true },
+];
+
+const SUPER_LINKS = [
+  { href: "/admin/learners", icon: Users, zh: "学员数据", en: "Learners", exact: false },
+  { href: "/admin/credits", icon: Wallet, zh: "额度申请", en: "Credit requests", exact: false },
+];
+
 const SIM_LINKS = [
   { href: "/sim/selection", icon: Search, zh: "选品模拟", en: "Selection" },
   { href: "/sim/procurement", icon: ShoppingCart, zh: "采购与供应商", en: "Procurement" },
@@ -88,30 +100,32 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     );
   }
   return (
-    <div className={cn("min-h-screen text-foreground", staff ? "bg-[#f4efe6]" : "bg-background")}>
-      <aside className={cn("fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r md:flex", staff ? "border-slate-800 bg-[#101828] text-slate-100" : "border-sidebar-border bg-sidebar")}>
+    <div className={cn("min-h-screen", staff ? "bg-[#0f172a]" : "bg-background text-foreground")}>
+      <aside className={cn("fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r md:flex", staff ? "border-slate-800 bg-[#0f172a] text-slate-100" : "border-sidebar-border bg-sidebar")}>
         <Sidebar pathname={pathname} onNavigate={() => undefined} />
       </aside>
-      <div className="md:pl-60">
-        <header className={cn("sticky top-0 z-20 flex h-14 items-center gap-2 border-b px-3 backdrop-blur md:px-6", staff ? "border-amber-900/40 bg-[#101828]/95" : "bg-background/90")}>
+      <div className={cn("md:pl-60", staff && "staff-main min-h-screen")}>
+        <header className={cn("sticky top-0 z-20 flex h-14 items-center gap-2 border-b px-3 md:px-6", staff ? "border-slate-200 bg-white text-slate-900" : "bg-background/90 backdrop-blur")}>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu">
                 <Menu />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-72 p-0">
+            <SheetContent side="left" className={cn("w-72 p-0", staff && "border-slate-800 bg-[#0f172a] text-slate-100")}>
               <Sidebar pathname={pathname} onNavigate={() => setOpen(false)} />
             </SheetContent>
           </Sheet>
-          {staff && <span className="hidden rounded-full bg-amber-400/15 px-2 py-1 text-xs font-medium text-amber-200 md:inline">{session.role === "superadmin" ? (locale === "zh" ? "超管控制台" : "Superadmin") : (locale === "zh" ? "管理端" : "Admin")}</span>}
-          <GlobalSearch />
+          {staff && <span className="hidden rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-800 md:inline">{session.role === "superadmin" ? (locale === "zh" ? "超管控制台" : "Superadmin") : (locale === "zh" ? "管理端" : "Admin")}</span>}
+          {!staff && <GlobalSearch />}
+          {!staff && <CreditPill />}
           <div className="ml-auto flex items-center gap-1">
             <LanguageSwitch />
             <ThemeSwitch />
-            <AlertBell />
+            {!staff && <AlertBell />}
           </div>
         </header>
+        {!staff && <CreditBanner />}
         <main className="mx-auto w-full max-w-7xl px-3 py-5 md:px-6 md:py-6">{children}</main>
         <footer className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-3 pb-8 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-6">
           <span>{locale === "zh" ? "© 2026 GlobalBridge 跨境电商模拟平台" : "© 2026 GlobalBridge simulation"}</span>
@@ -121,6 +135,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Link href="/help" className="hover:text-foreground">{locale === "zh" ? "联系我们" : "Contact"}</Link>
           </span>
         </footer>
+        {!staff && <CreditSync />}
       </div>
     </div>
   );
@@ -141,20 +156,39 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
   const xp = 650 + completed.length * 10 + purchases * 20 + liveExtra * 15 + extraCampaigns * 10;
   const level = levelFrom(xp);
   return (
-    <div className={cn("flex h-full flex-col", staff && "bg-[#101828] text-slate-100")}>
-      <Link href="/learn" onClick={onNavigate} className="flex items-center gap-2 px-4 py-4">
-        <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-          <GraduationCap className="size-5" />
+    <div className={cn("flex h-full flex-col", staff && "bg-[#0f172a] text-slate-100")}>
+      <Link href={staff ? "/admin" : "/learn"} onClick={onNavigate} className="flex items-center gap-2 px-4 py-4">
+        <span className={cn("grid size-9 place-items-center rounded-xl text-white", staff ? "bg-blue-600" : "bg-primary text-primary-foreground")}>
+          {staff ? <Shield className="size-5" /> : <GraduationCap className="size-5" />}
         </span>
         <span>
           <span className="block text-sm font-semibold leading-tight">GlobalBridge</span>
-          <span className="block text-[11px] text-muted-foreground">
-            {locale === "zh" ? "跨境电商全链路模拟" : "Cross-border simulation"}
+          <span className={cn("block text-[11px]", staff ? "text-slate-400" : "text-muted-foreground")}>
+            {staff ? (locale === "zh" ? "管理控制台" : "Admin console") : (locale === "zh" ? "跨境电商全链路模拟" : "Cross-border simulation")}
           </span>
         </span>
       </Link>
       <nav className="flex-1 space-y-0.5 overflow-auto px-2">
-        {LINKS.map((item) => {
+        {staff ? (
+          [...STAFF_LINKS, ...(role === "superadmin" ? SUPER_LINKS : [])].map((item) => {
+            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                className={cn(
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-200 hover:bg-white/10",
+                  active && "bg-blue-600 font-medium text-white hover:bg-blue-600",
+                )}
+              >
+                <Icon className="size-4" />
+                {label(item, locale)}
+              </Link>
+            );
+          })
+        ) : LINKS.map((item) => {
           const active = pathname === item.href || (item.href !== "/sim" && pathname.startsWith(item.href));
           const simActive = item.href === "/sim" && pathname.startsWith("/sim");
           const Icon = item.icon;
@@ -164,9 +198,8 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
                 href={item.href}
                 onClick={onNavigate}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-sidebar-accent",
-                  staff ? "text-slate-200 hover:bg-white/10" : "text-sidebar-foreground",
-                  (active || simActive) && (staff ? "bg-amber-400/15 font-medium text-amber-100" : "bg-sidebar-accent font-medium text-sidebar-accent-foreground"),
+                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent",
+                  (active || simActive) && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
                 )}
               >
                 <Icon className="size-4" />
@@ -180,9 +213,8 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
                       href={sub.href}
                       onClick={onNavigate}
                       className={cn(
-                        "block rounded-md px-2 py-1.5 text-xs hover:bg-sidebar-accent hover:text-foreground",
-                        staff ? "text-slate-400 hover:bg-white/10 hover:text-slate-100" : "text-muted-foreground",
-                        pathname === sub.href && (staff ? "bg-amber-400/15 font-medium text-amber-100" : "bg-sidebar-accent font-medium text-sidebar-accent-foreground"),
+                        "block rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                        pathname === sub.href && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
                       )}
                     >
                       {label(sub, locale)}
@@ -193,7 +225,7 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
             </div>
           );
         })}
-        <div className="mx-2 my-3 rounded-xl border bg-muted/40 p-3">
+        {!staff && <div className="mx-2 my-3 rounded-xl border bg-muted/40 p-3">
           <div className="mb-1 flex items-center justify-between text-xs">
             <span>{locale === "zh" ? "学习进度" : "Progress"}</span>
             <span className="font-medium text-primary">{pct}%</span>
@@ -209,25 +241,12 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
             <HelpCircle className="size-3.5" />
             {locale === "zh" ? "帮助中心" : "Help"}
           </Link>
-        </div>
-        {staff && (
-          <Link
-            href="/admin"
-            onClick={onNavigate}
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-amber-100 hover:bg-white/10",
-              pathname === "/admin" && "bg-amber-400/20 font-medium",
-            )}
-          >
-            <Shield className="size-4" />
-            {locale === "zh" ? "管理控制台" : "Admin console"}
-          </Link>
-        )}
+        </div>}
       </nav>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className={cn("m-2 flex items-center gap-2 rounded-xl border px-2 py-2 text-left", staff ? "border-slate-700 hover:bg-white/10" : "hover:bg-muted")}>
-            <span className={cn("grid size-8 place-items-center rounded-full", staff ? "bg-amber-400/20 text-amber-200" : "bg-primary/10 text-primary")}>
+            <span className={cn("grid size-8 place-items-center rounded-full", staff ? "bg-blue-500/20 text-blue-100" : "bg-primary/10 text-primary")}>
               <UserRound className="size-4" />
             </span>
             <span className="min-w-0 flex-1">

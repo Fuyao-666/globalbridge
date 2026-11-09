@@ -29,7 +29,7 @@ export function AdminScreen({ superadmin }: { superadmin: boolean }) {
       <PageIntro
         kicker={superadmin ? (locale === "zh" ? "超级管理员" : "Superadmin") : (locale === "zh" ? "管理员" : "Admin")}
         title={locale === "zh" ? "管理控制台" : "Admin console"}
-        body={locale === "zh" ? "这里和学员的学习界面分开。参数只影响当前这个管理员账号里的模拟。管理员账号只能由超级管理员添加。" : "This console is separate from the learner view. Parameters affect this admin account's simulator. Only a superadmin can add admin accounts."}
+        body={locale === "zh" ? "这里只放管理功能。管理员账号只能由超级管理员添加。学员数据、额度申请和充值在左侧对应入口。" : "This console is management only. Only a superadmin can add admin accounts. Learner data and credit top-ups are in the sidebar."}
       />
       <div className="mb-4 flex flex-wrap gap-2">
         {tabs.map((item) => (
@@ -88,7 +88,7 @@ function Accounts() {
 
   return (
     <div className="space-y-4">
-      <form className="grid gap-2 rounded-2xl border border-amber-200 bg-amber-50/60 p-4 md:grid-cols-2" onSubmit={submit}>
+      <form className="grid gap-2 rounded-2xl border bg-white p-4 shadow-sm md:grid-cols-2" onSubmit={submit}>
         <p className="text-sm text-muted-foreground md:col-span-2">{zh ? "新账号的角色固定为管理员，不能再创建一个超级管理员。" : "New accounts are admins. This form cannot create another superadmin."}</p>
         <Input placeholder={zh ? "称呼" : "Name"} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
         <Input placeholder={zh ? "用户名" : "Username"} value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} required />
@@ -108,7 +108,7 @@ function Accounts() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {rows.filter((row) => row.role !== "learner").map((row) => (
               <tr key={row.id} className="border-t">
                 <td className="px-3 py-2">{row.name}</td>
                 <td className="px-3 py-2">{row.username || "—"}</td>

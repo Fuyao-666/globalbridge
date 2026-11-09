@@ -1,4 +1,5 @@
 import { createSession, hashPassword, newAccountId, normalizeEmail, validEmail, type AccountRole } from "@/lib/auth";
+import { grantLearner } from "@/lib/credit-db";
 import { sql } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -32,6 +33,7 @@ export async function POST(request: Request) {
       role,
       await hashPassword(password),
     ]);
+    await grantLearner(id);
   } catch (error) {
     if (isUnique(error)) return Response.json({ error: "taken" }, { status: 409, headers: privateHeaders });
     return Response.json({ error: "unavailable" }, { status: 500, headers: privateHeaders });

@@ -2,8 +2,12 @@
 
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import { useStore } from "@/lib/store";
 import { formatMoney, formatMoneyExact, formatPct, formatSimDate } from "@/lib/format";
+import { summarizeRange } from "@/lib/selectors";
+import { postPnl, useCredit } from "@/components/credit-dock";
+import { useSession } from "@/components/session-bridge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +45,27 @@ export function ChainBar() {
   const locale = useStore((state) => state.locale);
   const advance = useStore((state) => state.advance);
   const simDay = useStore((state) => state.sim.simDay);
+  const session = useSession();
+  async function pushDays(days: number) {
+    if (session.role !== "learner") {
+      advance(days);
+      return;
+    }
+    const current = useCredit.getState().balance ?? await useCredit.getState().refresh();
+    if (current !== null && current <= 0) {
+      toast.error(locale === "zh" ? "实训额度已用完，请先申请充值。" : "Training credit is used up. Request a top-up first.");
+      useCredit.getState().setOpenApply(true);
+      return;
+    }
+    const from = useStore.getState().sim.simDay;
+    advance(days);
+    const sim = useStore.getState().sim;
+    const summary = summarizeRange(sim.ledger, sim.visitors, sim.adSpendByDay, from + 1, sim.simDay);
+    const cash = summary.gross + summary.refunds - summary.payment - summary.shipping - summary.other - summary.ads;
+    await postPnl(Math.round(cash * 100) / 100);
+    const next = useCredit.getState().balance;
+    if (next !== null && next <= 0) useCredit.getState().setOpenApply(true);
+  }
   const steps = [
     { href: "/sim/selection", zh: "选品", en: "Select" },
     { href: "/sim/procurement", zh: "采购", en: "Buy" },
@@ -64,8 +89,8 @@ export function ChainBar() {
         ))}
       </div>
       <div className="flex gap-2">
-        <Button variant="outline" className="h-8" onClick={() => advance(1)}>{locale === "zh" ? "推进 1 天" : "Advance 1 day"}</Button>
-        <Button className="h-8" onClick={() => advance(7)}>{locale === "zh" ? "推进 7 天" : "Advance 7 days"}</Button>
+        <Button variant="outline" className="h-8" onClick={() => void pushDays(1)}>{locale === "zh" ? "推进 1 天" : "Advance 1 day"}</Button>
+        <Button className="h-8" onClick={() => void pushDays(7)}>{locale === "zh" ? "推进 7 天" : "Advance 7 days"}</Button>
       </div>
     </div>
   );
