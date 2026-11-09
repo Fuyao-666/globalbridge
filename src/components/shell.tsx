@@ -33,6 +33,7 @@ import {
 import { PRODUCTS } from "@/lib/catalog";
 import { COURSES, courseLessons } from "@/lib/data/courses";
 import { GLOSSARY } from "@/lib/data/glossary";
+import { useSession } from "@/components/session-bridge";
 import { levelFrom, useStore } from "@/lib/store";
 import { useHydrated } from "@/components/providers";
 import { Button } from "@/components/ui/button";
@@ -124,9 +125,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
 function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () => void }) {
   const locale = useStore((state) => state.locale);
-  const role = useStore((state) => state.role);
+  const session = useSession();
   const profile = useStore((state) => state.profile);
-  const setRole = useStore((state) => state.setRole);
+  const role = session.role;
   const completed = useStore((state) => state.completedLessons);
   const purchases = useStore((state) => state.sim.purchases.length);
   const liveExtra = useStore((state) => state.sim.listings.filter((listing) => !listing.seed && listing.status === "live").length);
@@ -231,12 +232,22 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-56">
-          <DropdownMenuLabel>{locale === "zh" ? "模拟角色" : "Simulation role"}</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => setRole("learner")}>{locale === "zh" ? "学员" : "Learner"}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setRole("admin")}>{locale === "zh" ? "管理员" : "Admin"}</DropdownMenuItem>
+          <DropdownMenuLabel>
+            <span className="block">{role === "admin" ? (locale === "zh" ? "管理员" : "Admin") : (locale === "zh" ? "学员" : "Learner")}</span>
+            <span className="block truncate text-xs font-normal text-muted-foreground">{session.email}</span>
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/me">{locale === "zh" ? "编辑资料" : "Edit profile"}</Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              void fetch("/api/auth/logout", { method: "POST", redirect: "manual" }).finally(() => {
+                window.location.href = "/login";
+              });
+            }}
+          >
+            {locale === "zh" ? "退出登录" : "Log out"}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

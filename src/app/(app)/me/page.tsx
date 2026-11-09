@@ -30,7 +30,12 @@ export default function MePage() {
   return (
     <div>
       <PageIntro title={locale === "zh" ? "我的学习" : "My learning"} body={locale === "zh" ? `Lv.${level} · 成长值 ${xp}。完成课时、采购和上架都会增加成长值。` : `Lv.${level} · ${xp} points. Lessons, purchases, and live listings add points.`} />
-      <form className="mb-6 flex max-w-md gap-2" onSubmit={(event) => { event.preventDefault(); setProfile({ name, handle: name }); }}>
+      <form className="mb-6 flex max-w-md gap-2" onSubmit={async (event) => {
+        event.preventDefault();
+        const response = await fetch("/api/auth/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ name }) });
+        if (!response.ok) return;
+        setProfile({ name, handle: name });
+      }}>
         <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={24} />
         <Button type="submit" className="h-8">{locale === "zh" ? "保存称呼" : "Save name"}</Button>
       </form>

@@ -376,7 +376,8 @@ export const useStore = create<Store>()(
         }),
     }),
     {
-      name: "globalbridge-sim-v1",
+      name: "globalbridge-account-pending",
+      skipHydration: true,
       version: 2,
       partialize: (state) => ({
         locale: state.locale,
