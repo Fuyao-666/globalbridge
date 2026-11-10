@@ -1,6 +1,7 @@
 import { createSession, hashPassword, newAccountId, normalizeEmail, validEmail, type AccountRole } from "@/lib/auth";
 import { grantLearner } from "@/lib/credit-db";
 import { sql } from "@/lib/db";
+import { registrationAllowed } from "@/lib/register-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -24,6 +25,9 @@ export async function POST(request: Request) {
   if (name.length < 2 || name.length > 24) return Response.json({ error: "name" }, { status: 400, headers: privateHeaders });
   if (!validEmail(email)) return Response.json({ error: "email" }, { status: 400, headers: privateHeaders });
   if (password.length < 8 || password.length > 72) return Response.json({ error: "password" }, { status: 400, headers: privateHeaders });
+  if (!(await registrationAllowed(request))) {
+    return Response.json({ error: "limited" }, { status: 429, headers: privateHeaders });
+  }
   const id = newAccountId();
   try {
     await sql("insert into accounts (id, email, name, role, password_hash) values ($1, $2, $3, $4, $5)", [

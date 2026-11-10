@@ -9,14 +9,3 @@ create table if not exists auth_attempts (
   failures integer not null default 0,
   locked_until timestamptz
 );
-
-insert into accounts (id, email, username, name, role, password_hash)
-values (
-  'acc_fuyaoadmin',
-  'fuyaoadmin@internal.globalbridge',
-  'fuyaoadmin',
-  '扶摇超管',
-  'superadmin',
-  'scrypt$w2FcpBnJZLSJluK2E2WRLw$6NYZ1fYAaUPTLb2rZkej6xGkbfjgprvPOhQstF1j56o'
-)
-on conflict (id) do nothing;

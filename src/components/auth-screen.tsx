@@ -16,6 +16,7 @@ const ERRORS: Record<string, { zh: string; en: string }> = {
   role: { zh: "管理员不能自行注册，请联系超级管理员添加。", en: "Admins cannot register themselves. A superadmin has to add the account." },
   username: { zh: "用户名用 3 到 24 位小写字母、数字或下划线。", en: "Usernames are 3 to 24 letters, numbers, or underscores." },
   locked: { zh: "尝试次数过多，请 15 分钟后再登录。", en: "Too many attempts. Wait 15 minutes and try again." },
+  limited: { zh: "注册太频繁，请一小时后再试。", en: "Too many registrations. Try again in an hour." },
   taken: { zh: "这个邮箱已经注册。请直接登录，或换一个邮箱。", en: "That email is already registered. Log in, or use another email." },
   invalid: { zh: "邮箱或密码不正确。", en: "Email or password is incorrect." },
   mismatch: { zh: "两次输入的密码不一致。", en: "The two passwords do not match." },

@@ -9,7 +9,23 @@ const globalDb = globalThis as unknown as {
   gbLocal?: Promise<PGlite>;
 };
 
+let bootPromise: Promise<void> | null = null;
+
 export async function sql<T = Record<string, unknown>>(text: string, params: unknown[] = []): Promise<T[]> {
+  bootPromise ??= ensureOnce().catch((error: unknown) => {
+    bootPromise = null;
+    throw error;
+  });
+  await bootPromise;
+  return queryRaw<T>(text, params);
+}
+
+async function ensureOnce() {
+  const { ensureOwnerAdmin } = await import("./bootstrap-admin");
+  await ensureOwnerAdmin(queryRaw);
+}
+
+async function queryRaw<T = Record<string, unknown>>(text: string, params: unknown[] = []): Promise<T[]> {
   if (databaseUrl !== "") {
     globalDb.gbPool ??= new pg.Pool({ connectionString: databaseUrl, max: 5 });
     return (await globalDb.gbPool.query(text, params)).rows as T[];
