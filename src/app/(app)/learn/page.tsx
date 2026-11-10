@@ -55,13 +55,13 @@ export default function LearnPage() {
   return (
     <div>
       <PageIntro
-        title={locale === "zh" ? "学习中心" : "Learning center"}
-        body={locale === "zh" ? "通过真实跨境电商模拟场景，提升你的实战能力。" : "Practice the cross-border chain inside a simulator, then go back to the lesson that explains the number."}
+        title={locale === "zh" ? "课程资料" : "Lesson notes"}
+        body={locale === "zh" ? "先在店铺里做选品、采购和广告。这里解释那些数字从哪来，不是今天的起点。" : "Run selection, buying, and ads in the store first. These notes explain the numbers. They are not where the day starts."}
       />
       {formula && (
         <Link href="/learn/sourcing/src-22" className="mb-5 flex flex-col gap-1 rounded-2xl border bg-primary/5 px-4 py-3 hover:bg-primary/10 md:flex-row md:items-center md:justify-between">
           <div>
-            <div className="text-xs font-medium text-primary">{locale === "zh" ? "继续这一课" : "Continue here"}</div>
+            <div className="text-xs font-medium text-primary">{locale === "zh" ? "对照这一课" : "The matching note"}</div>
             <div className="font-medium">{formula.lesson.title[locale]}</div>
             <p className="text-sm text-muted-foreground">{locale === "zh" ? "毛利和真实利润不是同一个数。公式在这里，验算在选品页。" : "Gross margin and true profit are different numbers. The formula is here. The check is on the selection page."}</p>
           </div>

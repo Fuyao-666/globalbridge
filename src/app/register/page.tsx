@@ -6,6 +6,6 @@ export const dynamic = "force-dynamic";
 
 export default async function RegisterPage() {
   const account = await currentAccount();
-  if (account) redirect(isStaff(account.role) ? "/admin" : "/learn");
+  if (account) redirect(isStaff(account.role) ? "/admin" : "/sim");
   return <AuthScreen mode="register" role="learner" />;
 }

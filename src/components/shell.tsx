@@ -6,9 +6,7 @@ import { useMemo, useState } from "react";
 import { useTheme } from "next-themes";
 import {
   Bell,
-  BookOpen,
   ChevronDown,
-  FlaskConical,
   FolderOpen,
   GraduationCap,
   HelpCircle,
@@ -18,6 +16,7 @@ import {
   Menu,
   Moon,
   Search,
+  Store,
   Shield,
   Sun,
   UserRound,
@@ -52,16 +51,23 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "/learn", icon: GraduationCap, zh: "学习中心", en: "Learning center" },
+const BUSINESS = [
+  { href: "/sim", icon: Store, zh: "今日经营", en: "Today", exact: true },
+  { href: "/sim/selection", icon: Search, zh: "选品", en: "Select", exact: false },
+  { href: "/sim/procurement", icon: ShoppingCart, zh: "采购", en: "Buy", exact: false },
+  { href: "/sim/listings", icon: Package, zh: "上架", en: "List", exact: false },
+  { href: "/sim/ads", icon: Megaphone, zh: "广告", en: "Ads", exact: false },
+  { href: "/sim/dashboard", icon: LayoutDashboard, zh: "经营看板", en: "Dashboard", exact: false },
+];
+
+const STUDY = [
+  { href: "/learn", icon: GraduationCap, zh: "课程", en: "Lessons" },
   { href: "/map", icon: Map, zh: "课程地图", en: "Course map" },
-  { href: "/sim", icon: FlaskConical, zh: "模拟实训", en: "Simulator" },
-  { href: "/knowledge", icon: Library, zh: "知识库", en: "Knowledge" },
-  { href: "/glossary", icon: Tags, zh: "术语词典", en: "Glossary" },
-  { href: "/cases", icon: FolderOpen, zh: "案例库", en: "Cases" },
+  { href: "/glossary", icon: Tags, zh: "术语", en: "Glossary" },
+  { href: "/cases", icon: FolderOpen, zh: "案例", en: "Cases" },
+  { href: "/knowledge", icon: Library, zh: "知识库", en: "Notes" },
   { href: "/tools", icon: Wrench, zh: "工具箱", en: "Tools" },
-  { href: "/community", icon: MessagesSquare, zh: "社区讨论", en: "Community" },
-  { href: "/me", icon: BookOpen, zh: "我的学习", en: "My learning" },
+  { href: "/community", icon: MessagesSquare, zh: "社区", en: "Community" },
 ];
 
 const STAFF_LINKS = [
@@ -71,14 +77,6 @@ const STAFF_LINKS = [
 const SUPER_LINKS = [
   { href: "/admin/learners", icon: Users, zh: "学员数据", en: "Learners", exact: false },
   { href: "/admin/credits", icon: Wallet, zh: "额度申请", en: "Credit requests", exact: false },
-];
-
-const SIM_LINKS = [
-  { href: "/sim/selection", icon: Search, zh: "选品模拟", en: "Selection" },
-  { href: "/sim/procurement", icon: ShoppingCart, zh: "采购与供应商", en: "Procurement" },
-  { href: "/sim/listings", icon: Package, zh: "批量上架", en: "Listings" },
-  { href: "/sim/ads", icon: Megaphone, zh: "广告运营", en: "Advertising" },
-  { href: "/sim/dashboard", icon: LayoutDashboard, zh: "数据看板", en: "Dashboard" },
 ];
 
 function label(item: { zh: string; en: string }, locale: "zh" | "en") {
@@ -157,14 +155,14 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
   const level = levelFrom(xp);
   return (
     <div className={cn("flex h-full flex-col", staff && "bg-[#0f172a] text-slate-100")}>
-      <Link href={staff ? "/admin" : "/learn"} onClick={onNavigate} className="flex items-center gap-2 px-4 py-4">
+      <Link href={staff ? "/admin" : "/sim"} onClick={onNavigate} className="flex items-center gap-2 px-4 py-4">
         <span className={cn("grid size-9 place-items-center rounded-xl text-white", staff ? "bg-blue-600" : "bg-primary text-primary-foreground")}>
-          {staff ? <Shield className="size-5" /> : <GraduationCap className="size-5" />}
+          {staff ? <Shield className="size-5" /> : <Store className="size-5" />}
         </span>
         <span>
           <span className="block text-sm font-semibold leading-tight">GlobalBridge</span>
           <span className={cn("block text-[11px]", staff ? "text-slate-400" : "text-muted-foreground")}>
-            {staff ? (locale === "zh" ? "管理控制台" : "Admin console") : (locale === "zh" ? "跨境电商全链路模拟" : "Cross-border simulation")}
+            {staff ? (locale === "zh" ? "管理控制台" : "Admin console") : (locale === "zh" ? "跨境店铺模拟" : "Store simulation")}
           </span>
         </span>
       </Link>
@@ -188,46 +186,51 @@ function Sidebar({ pathname, onNavigate }: { pathname: string; onNavigate: () =>
               </Link>
             );
           })
-        ) : LINKS.map((item) => {
-          const active = pathname === item.href || (item.href !== "/sim" && pathname.startsWith(item.href));
-          const simActive = item.href === "/sim" && pathname.startsWith("/sim");
-          const Icon = item.icon;
-          return (
-            <div key={item.href}>
-              <Link
-                href={item.href}
-                onClick={onNavigate}
-                className={cn(
-                  "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent",
-                  (active || simActive) && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
-                )}
-              >
-                <Icon className="size-4" />
-                {label(item, locale)}
-              </Link>
-              {item.href === "/sim" && pathname.startsWith("/sim") && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l pl-2">
-                  {SIM_LINKS.map((sub) => (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      onClick={onNavigate}
-                      className={cn(
-                        "block rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
-                        pathname === sub.href && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
-                      )}
-                    >
-                      {label(sub, locale)}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+        ) : (
+          <>
+            <div className="px-3 pb-1 pt-2 text-[11px] font-medium tracking-wide text-muted-foreground">{locale === "zh" ? "店铺" : "STORE"}</div>
+            {BUSINESS.map((item) => {
+              const active = item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-foreground hover:bg-sidebar-accent",
+                    active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label(item, locale)}
+                </Link>
+              );
+            })}
+            <div className="px-3 pb-1 pt-4 text-[11px] font-medium tracking-wide text-muted-foreground">{locale === "zh" ? "课程资料" : "LESSONS"}</div>
+            {STUDY.map((item) => {
+              const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-sidebar-accent hover:text-foreground",
+                    active && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                  )}
+                >
+                  <Icon className="size-4" />
+                  {label(item, locale)}
+                </Link>
+              );
+            })}
+          </>
+        )}
         {!staff && <div className="mx-2 my-3 rounded-xl border bg-muted/40 p-3">
           <div className="mb-1 flex items-center justify-between text-xs">
-            <span>{locale === "zh" ? "学习进度" : "Progress"}</span>
+            <span>{locale === "zh" ? "课程进度" : "Lessons"}</span>
             <span className="font-medium text-primary">{pct}%</span>
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -291,9 +294,9 @@ function GlobalSearch() {
     const terms = GLOSSARY.filter((term) => `${term.abbr} ${term.name.zh} ${term.name.en}`.toLowerCase().includes(q)).slice(0, 4);
     const products = PRODUCTS.filter((product) => `${product.name.zh} ${product.name.en}`.toLowerCase().includes(q)).slice(0, 4);
     return [
-      ...courses.map((course) => ({ href: `/learn/${course.id}/${courseLessons(course)[0].id}`, title: course.title[locale], kind: locale === "zh" ? "课程" : "Course" })),
+      ...products.map((product) => ({ href: `/sim/selection?product=${product.id}`, title: product.name[locale], kind: locale === "zh" ? "商品" : "Product" })),
       ...terms.map((term) => ({ href: `/glossary?term=${term.id}`, title: `${term.abbr} · ${term.name[locale]}`, kind: locale === "zh" ? "术语" : "Term" })),
-      ...products.map((product) => ({ href: `/sim/selection?product=${product.id}`, title: product.name[locale], kind: locale === "zh" ? "选品" : "Product" })),
+      ...courses.map((course) => ({ href: `/learn/${course.id}/${courseLessons(course)[0].id}`, title: course.title[locale], kind: locale === "zh" ? "课程" : "Course" })),
     ];
   }, [query, locale]);
   return (
@@ -302,7 +305,7 @@ function GlobalSearch() {
       <Input
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder={locale === "zh" ? "搜索课程、知识点或商品" : "Search courses, terms, or products"}
+        placeholder={locale === "zh" ? "搜索商品、术语或课程" : "Search products, terms, or lessons"}
         className="h-9 pl-8"
         onKeyDown={(event) => {
           if (event.key === "Enter" && results[0]) {

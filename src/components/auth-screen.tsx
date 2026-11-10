@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { GraduationCap } from "lucide-react";
+import { Store } from "lucide-react";
 import { useStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,7 +56,7 @@ export function AuthScreen({ mode, role }: { mode: "login" | "register"; role?: 
         setPending(false);
         return;
       }
-      router.replace(payload.role === "admin" || payload.role === "superadmin" ? "/admin" : "/learn");
+      router.replace(payload.role === "admin" || payload.role === "superadmin" ? "/admin" : "/sim");
       router.refresh();
     } catch {
       setError("unavailable");
@@ -80,11 +80,11 @@ export function AuthScreen({ mode, role }: { mode: "login" | "register"; role?: 
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground">
-              <GraduationCap className="size-5" />
+              <Store className="size-5" />
             </span>
             <span>
               <span className="block text-sm font-semibold">GlobalBridge</span>
-              <span className="block text-xs text-muted-foreground">{zh ? "跨境电商全链路模拟" : "Cross-border simulation"}</span>
+              <span className="block text-xs text-muted-foreground">{zh ? "跨境店铺模拟" : "Store simulation"}</span>
             </span>
           </div>
           <button className="text-xs text-muted-foreground" onClick={() => setLocale(zh ? "en" : "zh")}>{zh ? "EN" : "中文"}</button>
